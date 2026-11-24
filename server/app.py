@@ -27,6 +27,11 @@ def index_articles():
 
 @app.route('/articles/<int:id>')
 def show_article(id):
+  if 'page_views' not in session:
+    session['page_views'] = 0
+  
+  session['page_views'] += 1
+  print(session['page_views'])
   article = Article.query.filter_by(id=id).first()
   article_data = ArticleSchema().dump(article)
   
