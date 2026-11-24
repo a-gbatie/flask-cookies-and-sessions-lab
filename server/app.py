@@ -31,7 +31,10 @@ def show_article(id):
     session['page_views'] = 0
   
   session['page_views'] += 1
-  print(session['page_views'])
+  
+  if session['page_views'] > 3:
+    return make_response({ 'error': 'Maximum pageview limit reached' }, 401)
+  
   article = Article.query.filter_by(id=id).first()
   article_data = ArticleSchema().dump(article)
   
