@@ -1,70 +1,176 @@
-# Getting Started with Create React App
+# Flask Cookies and Sessions Lab
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Overview
 
-## Available Scripts
+This project implements a session-based paywall for an article application using Flask and React. Users can view up to three articles before the backend restricts further access.
 
-In the project directory, you can run:
+The purpose of this lab is to practice using cookies and sessions to maintain state across HTTP requests.
 
-### `npm start`
+## Learning Objectives
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- Understand how cookies and sessions work in Flask.
+- Store and retrieve data using the Flask session object.
+- Track page views across multiple HTTP requests.
+- Implement a backend paywall using conditional logic.
+- Return appropriate HTTP status codes and JSON responses.
+- Test API functionality using pytest.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Technologies Used
 
-### `npm test`
+- Python 3.10
+- Flask
+- Flask-SQLAlchemy
+- Flask-Migrate
+- Marshmallow
+- SQLite
+- React
+- Pipenv
+- pytest
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Features
 
-### `npm run build`
+- Retrieve all articles.
+- Retrieve an individual article by ID.
+- Initialize a session-based page view counter.
+- Increment the counter with every individual article request.
+- Allow users to view their first three articles.
+- Return a 401 Unauthorized response after three page views.
+- Reset the page view counter using the clear session route.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Installation and Setup
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 1. Clone the Repository
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Clone this repository to your local machine:
 
-### `npm run eject`
+```bash
+git clone git@github.com:a-gbatie/flask-cookies-and-sessions-lab.git
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```bash
+cd flask-cookies-and-sessions-lab
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 2. Install Backend Dependencies
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+From the project root directory, run:
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+```bash
+pipenv install --python 3.10
+pipenv shell
+```
 
-## Learn More
+### 3. Install Frontend Dependencies
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```bash
+npm install --prefix client
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### 4. Set Up the Database
 
-### Code Splitting
+```bash
+cd server
+flask db upgrade
+python seed.py
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### 5. Start the Flask Backend
 
-### Analyzing the Bundle Size
+From the server directory, run:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```bash
+python app.py
+```
 
-### Making a Progressive Web App
+The backend runs at:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+http://localhost:5555
 
-### Advanced Configuration
+### 6. Start the React Frontend
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Open a separate terminal from the project root directory:
 
-### Deployment
+```bash
+npm start --prefix client
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## API Endpoints
 
-### `npm run build` fails to minify
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/articles` | Retrieve all articles |
+| GET | `/articles/<int:id>` | Retrieve an individual article |
+| GET | `/clear` | Reset the session page view counter |
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Paywall Implementation
+
+The application uses Flask's session object to track page views across requests.
+
+```python
+@app.route('/articles/<int:id>')
+def show_article(id):
+    if 'page_views' not in session:
+        session['page_views'] = 0
+
+    session['page_views'] += 1
+
+    if session['page_views'] > 3:
+        return make_response(
+            {'message': 'Maximum pageview limit reached'}, 401
+        )
+
+    article = Article.query.filter_by(id=id).first()
+    article_data = ArticleSchema().dump(article)
+
+    return make_response(article_data, 200)
+```
+
+### Expected Behavior
+
+| Article Request | Page Views | Status Code |
+| --------------- | ---------- | ----------- |
+| First | 1 | 200 OK |
+| Second | 2 | 200 OK |
+| Third | 3 | 200 OK |
+| Fourth | 4 | 401 Unauthorized |
+| Fifth | 5 | 401 Unauthorized |
+
+### Paywall Error Response
+
+```json
+{
+  "message": "Maximum pageview limit reached"
+}
+```
+
+## Testing
+
+### Automated Testing
+
+From the project root directory, run:
+
+```bash
+pipenv run python -m pytest -v
+```
+
+The automated tests verify:
+
+- Individual article retrieval.
+- Session initialization.
+- Page view counter incrementation.
+- Paywall enforcement.
+- Correct HTTP status codes and error messages.
+
+### Manual Testing
+
+1. Start the Flask server.
+2. Visit `http://localhost:5555/clear` to reset the counter.
+3. Visit `http://localhost:5555/articles/1`.
+4. Refresh the page to generate additional requests.
+5. Verify that the first three requests return article data.
+6. Verify that the fourth request returns the paywall error.
+7. Visit `/clear` again to reset the counter.
+
+## Screenshot of Completed Tests
+
+![3 Automated Tests Passing](image.png)
