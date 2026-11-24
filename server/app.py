@@ -17,18 +17,21 @@ db.init_app(app)
 
 @app.route('/clear')
 def clear_session():
-    session['page_views'] = 0
-    return {'message': '200: Successfully cleared session data.'}, 200
+  session['page_views'] = 0
+  return {'message': '200: Successfully cleared session data.'}, 200
 
 @app.route('/articles')
 def index_articles():
-    articles = [ArticleSchema().dump(a) for a in Article.query.all()]
-    return make_response(articles)
+  articles = [ArticleSchema().dump(a) for a in Article.query.all()]
+  return make_response(articles)
 
 @app.route('/articles/<int:id>')
 def show_article(id):
-    pass
+  article = Article.query.filter_by(id=id).first()
+  article_data = ArticleSchema().dump(article)
+  
+  return make_response(article_data, 200)
 
 
 if __name__ == '__main__':
-    app.run(port=5555)
+  app.run(port=5555)
