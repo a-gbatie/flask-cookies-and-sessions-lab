@@ -173,4 +173,4 @@ The automated tests verify:
 
 ## Screenshot of Completed Tests
 
-![3 Automated Tests Passing](image.png)
+![alt text](image.png)
